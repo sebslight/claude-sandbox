@@ -28,7 +28,7 @@ MCP_SERVERS = {
         "args": ["-y", "@notionhq/notion-mcp-server"],
         "required_env": ["NOTION_TOKEN"],
         "env": {
-            "OPENAPI_MCP_HEADERS": '{"Authorization": "Bearer ${NOTION_TOKEN}", "Notion-Version": "2022-06-28"}',
+            "OPENAPI_MCP_HEADERS": '{"Authorization": "Bearer ${NOTION_TOKEN}", "Notion-Version": "2025-09-03"}',
         },
     },
     "github": {

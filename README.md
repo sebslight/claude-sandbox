@@ -69,7 +69,7 @@ csb start
 |--------|-------------|------------------|
 | `filesystem` | File system access | - |
 | `firecrawl` | Web scraping | `FIRECRAWL_API_KEY` |
-| `notion` | Notion integration | `NOTION_TOKEN` |
+| `notion` | Notion integration (Notion-Version: 2025-09-03) | `NOTION_TOKEN` |
 | `github` | GitHub access | `GITHUB_TOKEN` |
 
 ### Managing Servers

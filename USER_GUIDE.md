@@ -664,7 +664,7 @@ CSB includes four pre-configured MCP servers:
 | `filesystem` | Read/write files in `/workspace` | None | `npx -y @modelcontextprotocol/server-filesystem /workspace` |
 | `github` | Access GitHub repositories | `GITHUB_TOKEN` | `npx -y @modelcontextprotocol/server-github` |
 | `firecrawl` | Web scraping and crawling | `FIRECRAWL_API_KEY` | `npx -y firecrawl-mcp` |
-| `notion` | Notion workspace integration | `NOTION_TOKEN` | `npx -y @notionhq/notion-mcp-server` |
+| `notion` | Notion workspace integration (Notion-Version: 2025-09-03) | `NOTION_TOKEN` | `npx -y @notionhq/notion-mcp-server` |
 
 ### Adding Built-in Servers
 
