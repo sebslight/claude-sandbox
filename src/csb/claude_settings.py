@@ -55,7 +55,9 @@ def sanitize_settings(settings: dict) -> dict:
     return settings
 
 
-def generate_runtime_settings(output_path: Path, source_path: Path | None = None) -> dict:
+def generate_runtime_settings(
+    output_path: Path, source_path: Path | None = None
+) -> dict:
     """Write a container-safe settings.json based on host settings."""
     if source_path is None:
         source_path = Path.home() / ".claude" / "settings.json"

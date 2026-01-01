@@ -52,6 +52,7 @@ def list_context(
     csb_json_path = devcontainer_path / "csb.json"
     if csb_json_path.exists():
         import json
+
         csb_config = json.loads(csb_json_path.read_text())
         config = ClaudeContextConfig.from_dict(csb_config.get("claude_context", {}))
     else:
@@ -105,10 +106,14 @@ def list_context(
         console.print("\n[bold]Sync Status[/]")
         context_dir = devcontainer_path / "claude-context"
         if context_dir.exists() and info["copied"]:
-            console.print("  [green]✓[/] Context copied to .devcontainer/claude-context/")
+            console.print(
+                "  [green]✓[/] Context copied to .devcontainer/claude-context/"
+            )
             console.print(f"      {len(info['copied'])} items synced")
         else:
-            console.print("  [yellow]![/] Not synced - run [cyan]csb claude sync[/] to copy parent contexts")
+            console.print(
+                "  [yellow]![/] Not synced - run [cyan]csb claude sync[/] to copy parent contexts"
+            )
     else:
         console.print("  [dim]No parent Claude context found[/]")
 
@@ -138,6 +143,7 @@ def sync_context(
 
     # Load config
     import json
+
     csb_json_path = devcontainer_path / "csb.json"
     if csb_json_path.exists():
         csb_config = json.loads(csb_json_path.read_text())
@@ -164,15 +170,23 @@ def sync_context(
         # Check if container is running
         dc = DevContainer(project_path)
         if dc.get_container_id():
-            console.print("\n[yellow]Container is running.[/] Run [cyan]csb claude refresh[/] to apply changes.")
+            console.print(
+                "\n[yellow]Container is running.[/] Run [cyan]csb claude refresh[/] to apply changes."
+            )
         else:
             console.print("\n[dim]Changes will be applied on next `csb start`[/]")
     else:
         console.print("\n[dim]No parent Claude context found to sync.[/]")
         # Only mention global context if it exists and is enabled
         global_claude = Path.home() / ".claude"
-        if config.include_global and global_claude.exists() and any(global_claude.iterdir()):
-            console.print("[dim]Your global ~/.claude/ context is already mounted automatically.[/]")
+        if (
+            config.include_global
+            and global_claude.exists()
+            and any(global_claude.iterdir())
+        ):
+            console.print(
+                "[dim]Your global ~/.claude/ context is already mounted automatically.[/]"
+            )
 
 
 @claude_app.command("refresh")
@@ -201,6 +215,7 @@ def refresh_context(
 
     # Load config
     import json
+
     csb_json_path = devcontainer_path / "csb.json"
     if csb_json_path.exists():
         csb_config = json.loads(csb_json_path.read_text())
@@ -235,12 +250,20 @@ def refresh_context(
         if success:
             console.print("[green]✓[/] Context refreshed in running container")
             console.print()
-            console.print("[dim]CLAUDE.md changes will be picked up on your next prompt.[/]")
-            console.print("[dim]Skills/agents/commands are symlinked and available immediately.[/]")
+            console.print(
+                "[dim]CLAUDE.md changes will be picked up on your next prompt.[/]"
+            )
+            console.print(
+                "[dim]Skills/agents/commands are symlinked and available immediately.[/]"
+            )
         else:
-            console.print("[yellow]![/] Could not refresh in container - try restarting with `csb start`")
+            console.print(
+                "[yellow]![/] Could not refresh in container - try restarting with `csb start`"
+            )
     else:
-        console.print("[dim]Container not running - context will be set up on next start[/]")
+        console.print(
+            "[dim]Container not running - context will be set up on next start[/]"
+        )
 
 
 @claude_app.command("add")
@@ -281,6 +304,7 @@ def add_source(
 
     # Load and update config
     import json
+
     csb_json_path = devcontainer_path / "csb.json"
     if csb_json_path.exists():
         csb_config = json.loads(csb_json_path.read_text())
@@ -328,6 +352,7 @@ def remove_source(
         raise typer.Exit(1)
 
     import json
+
     csb_config = json.loads(csb_json_path.read_text())
     claude_context = csb_config.get("claude_context", {})
     extra = claude_context.get("extra", [])

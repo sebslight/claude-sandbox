@@ -23,6 +23,7 @@ def handle_csb_errors(func):
         except CsbError as e:
             console.print(f"[red]Error:[/] {e}")
             raise typer.Exit(1)
+
     return wrapper
 
 
@@ -73,7 +74,9 @@ def add_server(
         server_info = MCP_SERVERS[server]
         console.print(f"[green]Added MCP server:[/] {server}")
         if server_info.get("required_env"):
-            console.print(f"[yellow]Required env vars:[/] {', '.join(server_info['required_env'])}")
+            console.print(
+                f"[yellow]Required env vars:[/] {', '.join(server_info['required_env'])}"
+            )
         console.print("[dim]Run `csb start --rebuild` to apply changes[/]")
     else:
         console.print(f"[yellow]Server already configured:[/] {server}")
@@ -140,7 +143,9 @@ def add_custom_server(
         console.print(f"[green]Added custom MCP server:[/] {name}")
         console.print(f"  Command: {command} {' '.join(args_list)}")
         if env_dict:
-            console.print(f"  [yellow]Required env vars:[/] {', '.join(env_dict.keys())}")
+            console.print(
+                f"  [yellow]Required env vars:[/] {', '.join(env_dict.keys())}"
+            )
         console.print("[dim]Run `csb start --rebuild` to apply changes[/]")
     else:
         console.print(f"[yellow]Server already exists:[/] {name}")
@@ -226,7 +231,11 @@ def list_servers(
     table.add_column("Required Env")
 
     for name, server in MCP_SERVERS.items():
-        status = "[green]✓ configured[/]" if name in configured_servers else "[dim]available[/]"
+        status = (
+            "[green]✓ configured[/]"
+            if name in configured_servers
+            else "[dim]available[/]"
+        )
         env_vars = ", ".join(server.get("required_env", [])) or "-"
         table.add_row(name, status, server["description"], env_vars)
 
@@ -249,6 +258,8 @@ def list_servers(
         console.print(custom_table)
 
     if not devcontainer_path.exists():
-        console.print("\n[dim]No .devcontainer/ found. Run `csb init` to get started.[/]")
+        console.print(
+            "\n[dim]No .devcontainer/ found. Run `csb init` to get started.[/]"
+        )
 
     console.print()

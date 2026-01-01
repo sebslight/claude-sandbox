@@ -35,6 +35,7 @@ def handle_csb_errors(func):
         except CsbError as e:
             console.print(f"[red]Error:[/] {e}")
             raise typer.Exit(1)
+
     return wrapper
 
 
@@ -117,7 +118,9 @@ def init(
         selected_servers = [s.strip() for s in mcp.split(",") if s.strip()]
         invalid_servers = [s for s in selected_servers if s not in MCP_SERVERS]
         if invalid_servers:
-            console.print(f"[red]Error:[/] Unknown MCP servers: {', '.join(invalid_servers)}")
+            console.print(
+                f"[red]Error:[/] Unknown MCP servers: {', '.join(invalid_servers)}"
+            )
             console.print(f"[dim]Available: {', '.join(MCP_SERVERS.keys())}[/]")
             raise typer.Exit(1)
         console.print(f"[dim]Using MCP servers: {', '.join(selected_servers)}[/]\n")
@@ -188,7 +191,9 @@ def init(
                     items.append("agents/")
                 if global_context.commands_dir:
                     items.append("commands/")
-                console.print(f"  [cyan]~/.claude/[/]: {', '.join(items)} [dim](always mounted)[/]")
+                console.print(
+                    f"  [cyan]~/.claude/[/]: {', '.join(items)} [dim](always mounted)[/]"
+                )
 
             if parent_contexts:
                 for pctx in parent_contexts:
@@ -203,7 +208,9 @@ def init(
                         items.append("commands/")
                     if pctx.rules_dir:
                         items.append("rules/")
-                    console.print(f"  [yellow]Parent {pctx.relative_depth}:[/] {pctx.source_path}")
+                    console.print(
+                        f"  [yellow]Parent {pctx.relative_depth}:[/] {pctx.source_path}"
+                    )
                     console.print(f"      Found: {', '.join(items)}")
 
                 console.print()
@@ -227,9 +234,15 @@ def init(
     if dc.needs_runtime_update():
         console.print("[dim]Updating sandbox config for runtime settings/MCP...[/]")
         dc.update()
-    dc.create(selected_servers, dockerfile_path=dockerfile_path, claude_context=claude_context_config)
+    dc.create(
+        selected_servers,
+        dockerfile_path=dockerfile_path,
+        claude_context=claude_context_config,
+    )
 
-    console.print(f"\n[green]Created .devcontainer/ with {len(selected_servers)} MCP servers[/]")
+    console.print(
+        f"\n[green]Created .devcontainer/ with {len(selected_servers)} MCP servers[/]"
+    )
     if dockerfile_path:
         console.print(f"[dim]Using custom Dockerfile: {dockerfile_path}[/]")
     if claude_context_config:
@@ -294,7 +307,9 @@ def start(
         spinner = Spinner("dots", text=Text(f" {status_text}", style="bold blue"))
         if output_lines:
             output_text = Text("\n".join(output_lines), style="dim")
-            panel = Panel(output_text, title="Build Output", border_style="dim", padding=(0, 1))
+            panel = Panel(
+                output_text, title="Build Output", border_style="dim", padding=(0, 1)
+            )
             return Group(spinner, panel)
         return spinner
 
@@ -311,11 +326,13 @@ def start(
     if not result or not result.success:
         console.print("\n[red]Error starting container[/]")
         if all_output:
-            console.print(Panel(
-                "\n".join(all_output[-30:]),  # Show last 30 lines on error
-                title="Build Output",
-                border_style="red",
-            ))
+            console.print(
+                Panel(
+                    "\n".join(all_output[-30:]),  # Show last 30 lines on error
+                    title="Build Output",
+                    border_style="red",
+                )
+            )
         raise typer.Exit(1)
 
     console.print("[green]Container running![/]")
@@ -435,6 +452,7 @@ def remove(
     # Remove configs if requested
     if remove_configs and devcontainer_path.exists():
         import shutil
+
         shutil.rmtree(devcontainer_path)
         console.print("[green]✓[/] .devcontainer/ removed")
 
@@ -511,8 +529,12 @@ def status(
     devcontainer_exists = (project_path / ".devcontainer").exists()
 
     console.print(f"\n[bold]Project:[/] {project_path}")
-    console.print(f"[bold]Devcontainer:[/] {'[green]configured[/]' if devcontainer_exists else '[yellow]not initialized[/]'}")
-    console.print(f"[bold]Container:[/] {'[green]running[/]' if running else '[dim]stopped[/]'}")
+    console.print(
+        f"[bold]Devcontainer:[/] {'[green]configured[/]' if devcontainer_exists else '[yellow]not initialized[/]'}"
+    )
+    console.print(
+        f"[bold]Container:[/] {'[green]running[/]' if running else '[dim]stopped[/]'}"
+    )
 
 
 @app.command()
@@ -547,7 +569,9 @@ def update(
 
     if not config:
         console.print("[red]Error:[/] No csb.json found. This project may have been")
-        console.print("initialized with an older version. Run `csb init --force` to recreate.")
+        console.print(
+            "initialized with an older version. Run `csb init --force` to recreate."
+        )
         raise typer.Exit(1)
 
     mcp_servers = config.get("mcp_servers", [])
@@ -561,7 +585,9 @@ def update(
     dc.update()
 
     console.print("\n[green]Devcontainer files regenerated![/]")
-    console.print("[dim]Run `csb start --rebuild` to apply changes to running container[/]")
+    console.print(
+        "[dim]Run `csb start --rebuild` to apply changes to running container[/]"
+    )
 
 
 @app.command()

@@ -106,7 +106,9 @@ class DevContainer:
         )
 
         # Write devcontainer.json
-        has_context_setup = (self.devcontainer_path / "claude-context" / "setup-claude-context.sh").exists()
+        has_context_setup = (
+            self.devcontainer_path / "claude-context" / "setup-claude-context.sh"
+        ).exists()
         devcontainer_json = self._generate_devcontainer_json(
             mcp_servers, custom_mcp_servers, has_context_setup
         )
@@ -162,18 +164,30 @@ class DevContainer:
         has_workspace_mcp = any("/workspace/.mcp.json" in mount for mount in mounts)
         runtime_settings = self.devcontainer_path / ".settings.runtime.json"
         runtime_mcp = self.devcontainer_path / ".mcp.runtime.json"
-        has_runtime = has_settings and has_mcp and runtime_settings.exists() and runtime_mcp.exists()
+        has_runtime = (
+            has_settings
+            and has_mcp
+            and runtime_settings.exists()
+            and runtime_mcp.exists()
+        )
         has_workspace_folder = config.get("workspaceFolder") == "/workspace"
 
         post_create = config.get("postCreateCommand", "")
-        setup_script = self.devcontainer_path / "claude-context" / "setup-claude-context.sh"
+        setup_script = (
+            self.devcontainer_path / "claude-context" / "setup-claude-context.sh"
+        )
         needs_post_create_guard = (
             isinstance(post_create, str)
             and "claude-context/setup-claude-context.sh" in post_create
             and not setup_script.exists()
         )
 
-        return not has_runtime or needs_post_create_guard or not has_workspace_mcp or not has_workspace_folder
+        return (
+            not has_runtime
+            or needs_post_create_guard
+            or not has_workspace_mcp
+            or not has_workspace_folder
+        )
 
     def update(self) -> None:
         """Regenerate config files based on saved csb.json config.
@@ -192,6 +206,7 @@ class DevContainer:
         claude_context = None
         if "claude_context" in config:
             from csb.claude_context import ClaudeContextConfig
+
             claude_context = ClaudeContextConfig.from_dict(config["claude_context"])
 
         self._update_config_files(mcp_servers, custom_mcp_servers, claude_context)
@@ -216,9 +231,12 @@ class DevContainer:
         claude_context = None
         if "claude_context" in config:
             from csb.claude_context import ClaudeContextConfig
+
             claude_context = ClaudeContextConfig.from_dict(config["claude_context"])
 
-        self._update_config_files(mcp_servers, config.get("custom_mcp_servers", {}), claude_context)
+        self._update_config_files(
+            mcp_servers, config.get("custom_mcp_servers", {}), claude_context
+        )
         return True
 
     def remove_mcp_server(self, server_name: str) -> bool:
@@ -247,6 +265,7 @@ class DevContainer:
             claude_context = None
             if "claude_context" in config:
                 from csb.claude_context import ClaudeContextConfig
+
                 claude_context = ClaudeContextConfig.from_dict(config["claude_context"])
 
             self._update_config_files(mcp_servers, custom_mcp_servers, claude_context)
@@ -281,9 +300,12 @@ class DevContainer:
         claude_context = None
         if "claude_context" in config:
             from csb.claude_context import ClaudeContextConfig
+
             claude_context = ClaudeContextConfig.from_dict(config["claude_context"])
 
-        self._update_config_files(config.get("mcp_servers", []), custom_mcp_servers, claude_context)
+        self._update_config_files(
+            config.get("mcp_servers", []), custom_mcp_servers, claude_context
+        )
         return True
 
     def _generate_devcontainer_json(
@@ -412,7 +434,7 @@ class DevContainer:
 
             output_lines = []
             for line in process.stdout:
-                line = line.rstrip('\n')
+                line = line.rstrip("\n")
                 output_lines.append(line)
                 yield line
 
@@ -433,10 +455,15 @@ class DevContainer:
             # Devcontainers are labeled with devcontainer.local_folder
             workspace_path = str(self.project_path)
             find_cmd = [
-                "docker", "ps", "-q",
-                "--filter", f"label=devcontainer.local_folder={workspace_path}",
+                "docker",
+                "ps",
+                "-q",
+                "--filter",
+                f"label=devcontainer.local_folder={workspace_path}",
             ]
-            result = subprocess.run(find_cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                find_cmd, capture_output=True, text=True, timeout=10
+            )
 
             container_id = result.stdout.strip()
             if not container_id:
@@ -444,10 +471,14 @@ class DevContainer:
 
             # Stop the container
             stop_cmd = ["docker", "stop", container_id]
-            stop_result = subprocess.run(stop_cmd, capture_output=True, text=True, timeout=30)
+            stop_result = subprocess.run(
+                stop_cmd, capture_output=True, text=True, timeout=30
+            )
 
             if stop_result.returncode == 0:
-                return CommandResult(success=True, output=f"Stopped container {container_id[:12]}")
+                return CommandResult(
+                    success=True, output=f"Stopped container {container_id[:12]}"
+                )
             return CommandResult(success=False, error=stop_result.stderr)
         except subprocess.TimeoutExpired:
             return CommandResult(success=False, error="Timeout stopping container")
@@ -464,10 +495,15 @@ class DevContainer:
 
             # Find container (including stopped ones) using -a flag
             find_cmd = [
-                "docker", "ps", "-aq",
-                "--filter", f"label=devcontainer.local_folder={workspace_path}",
+                "docker",
+                "ps",
+                "-aq",
+                "--filter",
+                f"label=devcontainer.local_folder={workspace_path}",
             ]
-            result = subprocess.run(find_cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                find_cmd, capture_output=True, text=True, timeout=10
+            )
 
             container_id = result.stdout.strip()
             if not container_id:
@@ -475,10 +511,14 @@ class DevContainer:
 
             # Remove the container
             rm_cmd = ["docker", "rm", container_id]
-            rm_result = subprocess.run(rm_cmd, capture_output=True, text=True, timeout=30)
+            rm_result = subprocess.run(
+                rm_cmd, capture_output=True, text=True, timeout=30
+            )
 
             if rm_result.returncode == 0:
-                return CommandResult(success=True, output=f"Removed container {container_id[:12]}")
+                return CommandResult(
+                    success=True, output=f"Removed container {container_id[:12]}"
+                )
             return CommandResult(success=False, error=rm_result.stderr)
         except subprocess.TimeoutExpired:
             return CommandResult(success=False, error="Timeout removing container")
@@ -497,10 +537,15 @@ class DevContainer:
 
             # Find images matching the devcontainer pattern
             find_cmd = [
-                "docker", "images", "-q",
-                "--filter", f"reference=vsc-{folder_name}-*",
+                "docker",
+                "images",
+                "-q",
+                "--filter",
+                f"reference=vsc-{folder_name}-*",
             ]
-            result = subprocess.run(find_cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                find_cmd, capture_output=True, text=True, timeout=10
+            )
 
             image_ids = result.stdout.strip().split("\n")
             image_ids = [img for img in image_ids if img]  # Filter empty strings
@@ -510,10 +555,14 @@ class DevContainer:
 
             # Remove the images
             rm_cmd = ["docker", "rmi"] + image_ids
-            rm_result = subprocess.run(rm_cmd, capture_output=True, text=True, timeout=60)
+            rm_result = subprocess.run(
+                rm_cmd, capture_output=True, text=True, timeout=60
+            )
 
             if rm_result.returncode == 0:
-                return CommandResult(success=True, output=f"Removed {len(image_ids)} image(s)")
+                return CommandResult(
+                    success=True, output=f"Removed {len(image_ids)} image(s)"
+                )
             return CommandResult(success=False, error=rm_result.stderr)
         except subprocess.TimeoutExpired:
             return CommandResult(success=False, error="Timeout removing image")
@@ -532,6 +581,7 @@ class DevContainer:
         ]
         # Use os.execvp to replace current process
         import os
+
         os.execvp("devcontainer", cmd)
 
     def exec_shell(self) -> None:
@@ -544,6 +594,7 @@ class DevContainer:
             "zsh",
         ]
         import os
+
         os.execvp("devcontainer", cmd)
 
     def is_running(self) -> bool:
@@ -569,11 +620,16 @@ class DevContainer:
         """Get the container ID for this project."""
         workspace_path = str(self.project_path)
         find_cmd = [
-            "docker", "ps", "-q",
-            "--filter", f"label=devcontainer.local_folder={workspace_path}",
+            "docker",
+            "ps",
+            "-q",
+            "--filter",
+            f"label=devcontainer.local_folder={workspace_path}",
         ]
         try:
-            result = subprocess.run(find_cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                find_cmd, capture_output=True, text=True, timeout=10
+            )
             container_id = result.stdout.strip()
             return container_id if container_id else None
         except Exception:
@@ -598,4 +654,5 @@ class DevContainer:
         cmd.append(container_id)
 
         import os
+
         os.execvp("docker", cmd)

@@ -25,8 +25,7 @@ class ContainerNotRunningError(CsbError):
 
     def __init__(self, project_path: str):
         super().__init__(
-            f"No running container for {project_path}.\n"
-            "Start it with: csb start"
+            f"No running container for {project_path}.\nStart it with: csb start"
         )
 
 
@@ -35,6 +34,5 @@ class DevcontainerNotInitializedError(CsbError):
 
     def __init__(self, project_path: str):
         super().__init__(
-            f"No .devcontainer/ found in {project_path}.\n"
-            "Initialize with: csb init"
+            f"No .devcontainer/ found in {project_path}.\nInitialize with: csb init"
         )
