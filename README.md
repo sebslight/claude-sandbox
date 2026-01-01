@@ -173,14 +173,16 @@ After running `csb claude refresh`:
 
 3. **Discovered content** is copied to `.devcontainer/claude-context/` and symlinked into place when the container starts
 
-4. **MCP configs are merged when Claude context setup is enabled** - if you run `csb init --with-claude-context` (or later `csb claude sync`), your global `~/.claude/.mcp.json` is merged with the project's MCP servers (project servers take precedence). Otherwise the project `.mcp.json` overwrites the global config inside the container.
+4. **MCP configs are generated for runtime** - CSB writes `.devcontainer/.mcp.runtime.json` and mounts it to `/workspace/.mcp.json` in the container. If Claude context setup is enabled, the runtime config merges global `~/.claude/.mcp.json` with project servers (project servers win).
 
 ## How It Works
 
 1. `csb init` creates a `.devcontainer/` folder with:
    - `devcontainer.json` - Container configuration
    - `Dockerfile` - Ubuntu 24.04 with Node.js, Python (via uv), Claude Code
-   - `.mcp.json` - MCP server configuration
+   - `.mcp.json` - MCP server selections
+   - `.mcp.runtime.json` - Runtime MCP config mounted into the container
+   - `.settings.runtime.json` - Runtime settings overlay for the container
    - `csb.json` - Tracks your MCP server selections for updates
 
 2. `csb start` runs `devcontainer up` and launches Claude Code with `--dangerously-skip-permissions`
@@ -259,7 +261,9 @@ uv run ruff check src/
 .devcontainer/
 ├── devcontainer.json  # Container config (auto-generated)
 ├── Dockerfile         # Container image (auto-generated)
-├── .mcp.json          # MCP servers for Claude (auto-generated)
+├── .mcp.json          # MCP server selections (auto-generated)
+├── .mcp.runtime.json  # Runtime MCP config mounted into the container
+├── .settings.runtime.json # Runtime settings overlay for the container
 ├── csb.json           # Your selections (preserved on update)
 └── claude-context/    # Parent Claude context (if enabled)
     ├── parents/

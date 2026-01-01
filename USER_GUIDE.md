@@ -163,7 +163,9 @@ your-project/
 ├── .devcontainer/
 │   ├── devcontainer.json   # Container configuration
 │   ├── Dockerfile          # Container image definition
-│   ├── .mcp.json           # MCP server configuration for Claude
+│   ├── .mcp.json           # MCP server selections (CSB)
+│   ├── .mcp.runtime.json   # Runtime MCP config mounted into the container
+│   ├── .settings.runtime.json # Runtime settings overlay for the container
 │   └── csb.json            # Your selections (preserved on updates)
 └── ... your project files
 ```
@@ -174,7 +176,9 @@ your-project/
 |------|---------|-----------------|
 | `devcontainer.json` | Defines container settings, mounts, environment | Yes |
 | `Dockerfile` | Defines the container image (Ubuntu 24.04 base) | Yes |
-| `.mcp.json` | Configures MCP servers that Claude Code will use | Yes |
+| `.mcp.json` | CSB MCP server selections | Yes |
+| `.mcp.runtime.json` | Runtime MCP config mounted into the container | Yes |
+| `.settings.runtime.json` | Container-safe settings overlay | Yes |
 | `csb.json` | Stores your MCP server selections | Preserved on update |
 
 ### Container Environment
@@ -524,7 +528,7 @@ csb mcp add firecrawl --path ~/projects/my-app
 
 **Behavior:**
 - Updates `csb.json` with the new server
-- Regenerates `devcontainer.json` and `.mcp.json`
+- Regenerates `devcontainer.json`, `.mcp.json`, `.mcp.runtime.json`, `.settings.runtime.json`
 - Displays any required environment variables
 
 ---
@@ -623,7 +627,7 @@ csb update
 
 **Behavior:**
 - Reads `csb.json` for your MCP server selections
-- Regenerates `devcontainer.json` and `.mcp.json`
+- Regenerates `devcontainer.json`, `.mcp.json`, `.mcp.runtime.json`, `.settings.runtime.json`
 - Does NOT regenerate Dockerfile (use `csb init --force` for that)
 - Preserves your selections in `csb.json`
 
@@ -750,7 +754,7 @@ Your global Claude configuration is automatically mounted into the container:
 - `~/.claude/agents/` - Personal agents
 - `~/.claude/commands/` - Custom slash commands
 - `~/.claude/settings.json` - Your settings
-- `~/.claude/.mcp.json` - Global MCP servers (merged with project servers)
+- `~/.claude/.mcp.json` - Global MCP servers (merged into runtime config when enabled)
 
 No additional setup needed - this works automatically.
 
@@ -869,13 +873,10 @@ csb claude remove ~/my-org/CLAUDE.md
 
 ### How MCP Configs Are Merged
 
-CSB merges your global `~/.claude/.mcp.json` with the project's MCP servers **only when Claude context setup is enabled** (via `csb init --with-claude-context` or `csb claude sync`):
+CSB builds a runtime MCP config at `.devcontainer/.mcp.runtime.json` and mounts it into the container as `/workspace/.mcp.json`.
+When Claude context setup is enabled (via `csb init --with-claude-context` or `csb claude sync`), CSB merges your global `~/.claude/.mcp.json` into the runtime config (project servers take precedence).
 
-1. Global MCP servers from `~/.claude/.mcp.json` are loaded
-2. Project MCP servers from `.devcontainer/.mcp.json` are merged in
-3. **Project servers take precedence** if there are name conflicts
-
-If Claude context setup is not enabled, the project `.mcp.json` is copied into the container and replaces the global config.
+If Claude context setup is not enabled, the runtime config only includes the project-selected servers.
 
 ### Inside the Container
 
@@ -887,7 +888,6 @@ When the container starts, CSB sets up your Claude context as follows:
 /home/claude/.claude/           # Claude's home config directory
 ├── CLAUDE.md                   # Your global instructions (mounted from ~/.claude/)
 ├── settings.json               # Your settings (mounted)
-├── .mcp.json                   # Merged MCP config (global + project)
 ├── skills/                     # Skills directory
 │   ├── my-skill/               # Your global skills (mounted)
 │   └── org-skill-level-1/      # Parent skills (symlinked, suffixed with level)
@@ -901,6 +901,9 @@ When the container starts, CSB sets up your Claude context as follows:
 └── parents/                    # Parent CLAUDE.md files
     ├── level-1-CLAUDE.md       # Symlink to immediate parent's CLAUDE.md
     └── level-2-CLAUDE.md       # Symlink to grandparent's CLAUDE.md
+
+/workspace/.mcp.json                 # Runtime MCP config (project scope)
+/home/claude/.claude/.mcp.json       # Same runtime config (backward compatibility)
 
 /workspace/.devcontainer/claude-context/  # Copied parent content
 ├── parents/
@@ -1339,7 +1342,9 @@ csb init
 2. **Verify server is configured:**
    ```bash
    cat .devcontainer/csb.json
-   cat .devcontainer/.mcp.json
+   cat .devcontainer/.mcp.runtime.json
+   # Inside container
+   cat /workspace/.mcp.json
    ```
 
 3. **Check environment variables are passed:**
@@ -1495,7 +1500,9 @@ git commit -m "Add Claude sandbox configuration"
 **What to commit:**
 - `devcontainer.json` - Container settings
 - `Dockerfile` - Container image
-- `.mcp.json` - MCP server configuration
+- `.mcp.json` - MCP server selections
+- `.mcp.runtime.json` - Runtime MCP config
+- `.settings.runtime.json` - Runtime settings overlay
 - `csb.json` - MCP server selections
 
 **What NOT to commit:**
