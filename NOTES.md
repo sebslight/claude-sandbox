@@ -1,0 +1,8 @@
+# NOTES
+
+- 2025-12-30: Reviewed CLI/docs to align defaults and runtime support. Ran `rg` and `sed` to inspect command options and container behavior. Wired `default_mcp_servers` into interactive `csb init`, and updated README/USER_GUIDE to require a Docker-compatible `docker` CLI and to document MCP merge behavior only when Claude context setup is enabled.
+- 2025-12-30: Added support for extra Claude context sources that are direct files (`CLAUDE.md` or `CLAUDE.local.md`) by handling file paths in context discovery.
+- 2025-12-30: Captured CLI help output to `out/cli-help.txt` and reconciled README/USER_GUIDE with current options (added `--force` mention and `--project` notes, clarified `container_runtime` reserved).
+- 2025-12-30: End-to-end container build test. Ran `docker --version`, `devcontainer --version`. Created `out/e2e-project` and `out/e2e-home`, ran `HOME=... uv run csb init --mcp filesystem --with-claude-context out/e2e-project`. Built container via `HOME=... uv run python -c "DevContainer(...).up(rebuild=True)"` (success, container running), then `HOME=... uv run csb stop out/e2e-project` and `HOME=... uv run csb remove --force out/e2e-project` for cleanup.
+- 2025-12-30: Ran `csb start` in a detached tmux session to avoid blocking. Command: `HOME=out/e2e-home ANTHROPIC_API_KEY=sk-ant-placeholder uv run csb start out/e2e-project`. Captured initial Claude UI output in `out/e2e-claude.txt` and verified container running via `csb status`, then stopped the container.
+- 2025-12-30: Cleaned up e2e artifacts: `csb remove --force out/e2e-project`, removed `out/e2e-project`, `out/e2e-home`, and `out/e2e-claude.txt`.
