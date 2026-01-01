@@ -10,7 +10,8 @@ from pathlib import Path
 from importlib import resources
 from typing import TYPE_CHECKING
 
-from csb.mcp import generate_mcp_config, MCP_SERVERS
+from csb.mcp import generate_mcp_config, generate_runtime_mcp_config, MCP_SERVERS
+from csb.claude_settings import generate_runtime_settings
 from csb.exceptions import DevcontainerCliNotFoundError
 import csb.templates
 
@@ -119,12 +120,60 @@ class DevContainer:
             json.dumps(mcp_config, indent=2)
         )
 
+        # Write runtime MCP config (merged with global when Claude context is enabled)
+        runtime_mcp_config = generate_runtime_mcp_config(
+            mcp_servers,
+            custom_mcp_servers,
+            merge_global=bool(claude_context and claude_context.include_global),
+        )
+        (self.devcontainer_path / ".mcp.runtime.json").write_text(
+            json.dumps(runtime_mcp_config, indent=2)
+        )
+
+        # Write runtime settings.json with container-safe hooks
+        generate_runtime_settings(self.devcontainer_path / ".settings.runtime.json")
+
     def get_csb_config(self) -> dict | None:
         """Read csb.json configuration if it exists."""
         csb_json_path = self.devcontainer_path / "csb.json"
         if csb_json_path.exists():
             return json.loads(csb_json_path.read_text())
         return None
+
+    def needs_runtime_update(self) -> bool:
+        """Check if devcontainer.json includes runtime config mounts."""
+        devcontainer_json_path = self.devcontainer_path / "devcontainer.json"
+        csb_json_path = self.devcontainer_path / "csb.json"
+
+        if not devcontainer_json_path.exists() or not csb_json_path.exists():
+            return False
+
+        try:
+            config = json.loads(devcontainer_json_path.read_text())
+        except json.JSONDecodeError:
+            return True
+
+        mounts = config.get("mounts", [])
+        if not isinstance(mounts, list):
+            return True
+
+        has_settings = any(".settings.runtime.json" in mount for mount in mounts)
+        has_mcp = any(".mcp.runtime.json" in mount for mount in mounts)
+        has_workspace_mcp = any("/workspace/.mcp.json" in mount for mount in mounts)
+        runtime_settings = self.devcontainer_path / ".settings.runtime.json"
+        runtime_mcp = self.devcontainer_path / ".mcp.runtime.json"
+        has_runtime = has_settings and has_mcp and runtime_settings.exists() and runtime_mcp.exists()
+        has_workspace_folder = config.get("workspaceFolder") == "/workspace"
+
+        post_create = config.get("postCreateCommand", "")
+        setup_script = self.devcontainer_path / "claude-context" / "setup-claude-context.sh"
+        needs_post_create_guard = (
+            isinstance(post_create, str)
+            and "claude-context/setup-claude-context.sh" in post_create
+            and not setup_script.exists()
+        )
+
+        return not has_runtime or needs_post_create_guard or not has_workspace_mcp or not has_workspace_folder
 
     def update(self) -> None:
         """Regenerate config files based on saved csb.json config.
@@ -258,25 +307,33 @@ class DevContainer:
                     env_vars[env_var] = f"${{localEnv:{env_var}}}"
 
         # Build postCreateCommand - run context setup if it exists
-        if has_context_setup:
-            post_create = "/workspace/.devcontainer/claude-context/setup-claude-context.sh"
-        else:
-            # Fallback: just copy MCP config (merge is handled by setup script when it exists)
-            post_create = "cp /workspace/.devcontainer/.mcp.json /home/claude/.claude/.mcp.json 2>/dev/null || true"
+        post_create = (
+            "if [ -f /workspace/.devcontainer/claude-context/setup-claude-context.sh ]; then "
+            "/workspace/.devcontainer/claude-context/setup-claude-context.sh; fi"
+        )
 
         # postStartCommand - re-run context setup on each start (in case sources changed)
-        if has_context_setup:
-            post_start = "/workspace/.devcontainer/claude-context/setup-claude-context.sh && echo 'Claude Sandbox ready!'"
-        else:
-            post_start = "echo 'Claude Sandbox ready! Run: claude --dangerously-skip-permissions'"
+        post_start = (
+            "if [ -f /workspace/.devcontainer/claude-context/setup-claude-context.sh ]; then "
+            "/workspace/.devcontainer/claude-context/setup-claude-context.sh; "
+            "fi; echo 'Claude Sandbox ready! Run: claude --dangerously-skip-permissions'"
+        )
 
         return {
             "name": "Claude Sandbox",
             "build": {
                 "dockerfile": "Dockerfile",
             },
+            "workspaceFolder": "/workspace",
+            "workspaceMount": (
+                "source=${localWorkspaceFolder},target=/workspace,"
+                "type=bind,consistency=cached"
+            ),
             "mounts": [
-                "source=${localEnv:HOME}/.claude,target=/home/claude/.claude,type=bind,consistency=cached"
+                "source=${localEnv:HOME}/.claude,target=/home/claude/.claude,type=bind,consistency=cached",
+                "source=${localWorkspaceFolder}/.devcontainer/.settings.runtime.json,target=/home/claude/.claude/settings.json,type=bind,consistency=cached",
+                "source=${localWorkspaceFolder}/.devcontainer/.mcp.runtime.json,target=/workspace/.mcp.json,type=bind,consistency=cached",
+                "source=${localWorkspaceFolder}/.devcontainer/.mcp.runtime.json,target=/home/claude/.claude/.mcp.json,type=bind,consistency=cached",
             ],
             "containerEnv": {
                 "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}",

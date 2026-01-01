@@ -1,5 +1,10 @@
 """MCP server registry and configuration generator."""
 
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
 # Registry of available MCP servers
 MCP_SERVERS = {
     "filesystem": {
@@ -81,3 +86,40 @@ def generate_mcp_config(
             config["mcpServers"][name] = server_config
 
     return config
+
+
+def _load_mcp_config(path: Path) -> dict | None:
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return None
+
+
+def _merge_mcp_configs(base: dict, override: dict) -> dict:
+    return {
+        "mcpServers": {
+            **base.get("mcpServers", {}),
+            **override.get("mcpServers", {}),
+        }
+    }
+
+
+def generate_runtime_mcp_config(
+    server_names: list[str],
+    custom_servers: dict | None = None,
+    merge_global: bool = False,
+    global_config_path: Path | None = None,
+) -> dict:
+    """Generate MCP config for container runtime."""
+    project_config = generate_mcp_config(server_names, custom_servers)
+
+    if not merge_global:
+        return project_config
+
+    if global_config_path is None:
+        global_config_path = Path.home() / ".claude" / ".mcp.json"
+
+    global_config = _load_mcp_config(global_config_path) or {"mcpServers": {}}
+    return _merge_mcp_configs(global_config, project_config)

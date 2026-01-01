@@ -287,33 +287,6 @@ class ClaudeContext:
             "",
         ]
 
-        # Add MCP merge logic
-        lines.extend([
-            "# Merge MCP configurations",
-            "if [ -f \"$CLAUDE_HOME/.mcp.json\" ] && [ -f \"/workspace/.devcontainer/.mcp.json\" ]; then",
-            "    # Merge global and project MCP configs",
-            "    python3 << 'PYEOF'",
-            "import json",
-            "from pathlib import Path",
-            "",
-            "global_mcp = Path('/home/claude/.claude/.mcp.json')",
-            "project_mcp = Path('/workspace/.devcontainer/.mcp.json')",
-            "output_mcp = Path('/home/claude/.claude/.mcp.json')",
-            "",
-            "global_config = json.loads(global_mcp.read_text()) if global_mcp.exists() else {'mcpServers': {}}",
-            "project_config = json.loads(project_mcp.read_text())",
-            "",
-            "# Project servers override global ones with same name",
-            "merged = {'mcpServers': {**global_config.get('mcpServers', {}), **project_config.get('mcpServers', {})}}",
-            "output_mcp.write_text(json.dumps(merged, indent=2))",
-            "print(f'Merged MCP config: {len(merged[\"mcpServers\"])} servers')",
-            "PYEOF",
-            "elif [ -f \"/workspace/.devcontainer/.mcp.json\" ]; then",
-            "    cp /workspace/.devcontainer/.mcp.json \"$CLAUDE_HOME/.mcp.json\"",
-            "fi",
-            "",
-        ])
-
         # Copy parent CLAUDE.md files and create imports
         parent_claude_mds = []
         for context in contexts:

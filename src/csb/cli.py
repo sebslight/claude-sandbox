@@ -224,6 +224,9 @@ def init(
 
     # Create devcontainer
     dc = DevContainer(project_path)
+    if dc.needs_runtime_update():
+        console.print("[dim]Updating sandbox config for runtime settings/MCP...[/]")
+        dc.update()
     dc.create(selected_servers, dockerfile_path=dockerfile_path, claude_context=claude_context_config)
 
     console.print(f"\n[green]Created .devcontainer/ with {len(selected_servers)} MCP servers[/]")
