@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import subprocess
 import shutil
 import json
@@ -139,7 +140,11 @@ class DevContainer:
         """Read csb.json configuration if it exists."""
         csb_json_path = self.devcontainer_path / "csb.json"
         if csb_json_path.exists():
-            return json.loads(csb_json_path.read_text())
+            try:
+                return json.loads(csb_json_path.read_text())
+            except json.JSONDecodeError:
+                logging.warning(f"Invalid JSON in {csb_json_path}, treating as missing")
+                return None
         return None
 
     def needs_runtime_update(self) -> bool:

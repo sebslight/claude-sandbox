@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import shlex
 from pathlib import Path
@@ -30,6 +31,7 @@ def _wrap_absolute_command(command: str) -> str:
 
 def sanitize_settings(settings: dict) -> dict:
     """Return a sanitized copy of settings for container use."""
+    settings = copy.deepcopy(settings)
     hooks = settings.get("hooks")
     if not isinstance(hooks, dict):
         return settings
