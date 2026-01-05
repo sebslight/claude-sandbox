@@ -16,6 +16,7 @@ from csb.config import Config
 from csb.exceptions import CsbError
 from csb.cli_mcp import mcp_app
 from csb.cli_claude import claude_app
+from csb.cli_cleanup import cleanup_app
 from csb.claude_context import ClaudeContext, ClaudeContextConfig
 
 console = Console()
@@ -48,6 +49,7 @@ app = typer.Typer(
 # Register subcommand groups
 app.add_typer(mcp_app, name="mcp")
 app.add_typer(claude_app, name="claude")
+app.add_typer(cleanup_app, name="cleanup")
 
 
 @app.command()

@@ -60,6 +60,12 @@ csb start
 | `csb claude refresh` | Refresh context in running container |
 | `csb claude add <path>` | Add extra Claude context source |
 | `csb claude remove <path>` | Remove extra Claude context source |
+| `csb cleanup [--dry-run] [--force]` | Clean up unused containers, images, and orphaned configs |
+| `csb cleanup report [--json]` | Show detailed disk usage report |
+| `csb cleanup containers` | Remove stopped CSB containers |
+| `csb cleanup images` | Remove unused CSB images |
+| `csb cleanup orphans` | Remove orphaned .devcontainer/ directories |
+| `csb cleanup dangling` | Remove dangling Docker images |
 
 ## MCP Servers
 
@@ -106,6 +112,44 @@ csb remove --all
 # Force rebuild with no Docker cache (for Dockerfile changes)
 csb start --rebuild --no-cache
 ```
+
+### Cleanup & Disk Usage
+
+CSB accumulates Docker images, stopped containers, and orphaned `.devcontainer/` directories over time. The `cleanup` command helps reclaim disk space:
+
+```bash
+# Interactive cleanup - shows what can be removed and prompts for confirmation
+csb cleanup
+
+# Preview what would be removed (no changes made)
+csb cleanup --dry-run
+
+# Skip confirmation prompts
+csb cleanup --force
+
+# Show detailed disk usage report
+csb cleanup report
+
+# Export report as JSON for scripting
+csb cleanup report --json
+
+# Target specific cleanup types
+csb cleanup containers      # Remove stopped containers only
+csb cleanup images          # Remove unused images only
+csb cleanup orphans         # Remove orphaned .devcontainer/ dirs only
+csb cleanup dangling        # Remove dangling Docker images only
+
+# Include running containers (will be stopped first - requires confirmation)
+csb cleanup --all
+```
+
+The cleanup report shows:
+- **Containers**: Stopped containers from CSB-managed projects (those with `csb.json`)
+- **Images**: Images from CSB-managed projects only (matched by folder name)
+- **Dangling Images**: Intermediate Docker build layers no longer referenced
+- **Orphaned Directories**: `.devcontainer/` dirs with `csb.json` but no container
+
+Note: Only CSB-managed resources are affected. Containers and images from other devcontainer tools or projects are never touched.
 
 ## Claude Context
 
